@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barraca — Gestão</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0e0c; --surface:#1a1814; --s2:#231f1a; --s3:#2e2820;
+  --border:rgba(255,200,80,0.12); --border2:rgba(255,200,80,0.22);
+  --fire:#ff6b1a; --amber:#ffb830; --gold:#ffd966;
+  --text:#f5ead8; --t2:#a09070; --t3:#5a4e3a;
+  --green:#4caf7d; --red:#e05555; --blue:#5b9cf6; --purple:#a78bfa;
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100;}
+.logo{font-size:18px;font-weight:800;letter-spacing:-.5px;}
+.logo span{color:var(--fire);}
+.nav{display:flex;gap:4px;}
+.nav-btn{padding:7px 16px;border-radius:8px;border:none;cursor:pointer;font-family:'Syne',sans-serif;font-size:13px;font-weight:600;background:transparent;color:var(--t2);transition:all .15s;}
+.nav-btn:hover{color:var(--text);background:var(--s2);}
+.nav-btn.active{background:var(--amber);color:#1a1000;}
+.clock{font-family:'DM Mono',monospace;font-size:13px;color:var(--t2);}
+
+.page{display:none;padding:20px 24px;max-width:1280px;margin:0 auto;}
+.page.active{display:block;}
+
+.btn{padding:8px 16px;border-radius:8px;border:1px solid var(--border2);cursor:pointer;font-family:'Syne',sans-serif;font-size:13px;font-weight:600;background:var(--s2);color:var(--text);transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
+.btn:hover{background:var(--s3);border-color:var(--amber);}
+.btn-primary{background:var(--amber);color:#1a1000;border-color:var(--amber);}
+.btn-primary:hover{background:var(--gold);border-color:var(--gold);}
+.btn-green{background:var(--green);color:#0a2015;border-color:var(--green);}
+.btn-green:hover{background:#5dc98a;border-color:#5dc98a;}
+.btn-danger{background:transparent;color:var(--red);border-color:rgba(224,85,85,0.3);}
+.btn-danger:hover{background:rgba(224,85,85,0.1);border-color:var(--red);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.btn-xs{padding:3px 8px;font-size:11px;}
+.btn-full{width:100%;justify-content:center;}
+
+.input{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;outline:none;transition:border .15s;width:100%;}
+.input:focus{border-color:var(--amber);}
+.input::placeholder{color:var(--t3);}
+
+.stitle{font-size:11px;font-weight:700;color:var(--t2);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px;}
+.divider{height:1px;background:var(--border);margin:12px 0;}
+.empty{text-align:center;color:var(--t3);font-size:13px;padding:20px 0;}
+
+/* ── GRELHA BAR ── */
+.grelha-bar{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:14px 18px;margin-bottom:18px;}
+.grelha-bar-top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px;}
+.grelha-title{font-size:11px;font-weight:700;color:var(--t2);letter-spacing:1.2px;text-transform:uppercase;}
+.grelha-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+.grelha-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;}
+.grelha-nums{display:flex;flex-direction:column;gap:2px;}
+.grelha-num{font-size:28px;font-weight:800;line-height:1;font-family:'DM Mono',monospace;}
+.grelha-label{font-size:11px;color:var(--t2);margin-top:1px;}
+.grelha-sep{width:1px;height:36px;background:var(--border);flex-shrink:0;}
+.grelha-col{display:flex;flex-direction:column;gap:4px;}
+.grelha-row{display:flex;align-items:center;gap:8px;}
+.grelha-row-label{font-size:11px;color:var(--t2);min-width:70px;}
+.grelha-row-num{font-size:13px;font-weight:800;font-family:'DM Mono',monospace;}
+.grelha-row-ctrl{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.qbtn{width:22px;height:22px;border-radius:5px;border:1px solid var(--border2);background:var(--s3);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;transition:all .12s;}
+.qbtn:hover{background:var(--amber);color:#1a1000;border-color:var(--amber);}
+.alerta-grelha{font-size:12px;color:var(--red);background:rgba(224,85,85,0.1);border-radius:6px;padding:4px 10px;margin-left:auto;}
+
+/* ── MESAS ── */
+.main-layout{display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;}
+@media(max-width:900px){.main-layout{grid-template-columns:1fr;}}
+.mesas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;}
+.mesa-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;user-select:none;}
+.mesa-card:hover{border-color:var(--border2);background:var(--s2);}
+.mesa-card.status-pedido{border-color:rgba(255,107,26,0.4);}
+.mesa-card.status-pedido::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--fire),var(--amber));}
+.mesa-card.status-entregue{border-color:rgba(76,175,125,0.4);}
+.mesa-card.status-entregue::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--green);}
+.mesa-card.status-conta{border-color:rgba(167,139,250,0.5);}
+.mesa-card.status-conta::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--purple);}
+.mesa-card.selecionada{box-shadow:0 0 0 2px rgba(255,184,48,0.25);border-color:var(--amber);}
+.mesa-num{font-size:26px;font-weight:800;line-height:1;}
+.mesa-status-txt{font-size:11px;color:var(--t2);margin-top:3px;}
+.mesa-card.status-pedido .mesa-status-txt{color:var(--fire);}
+.mesa-card.status-entregue .mesa-status-txt{color:var(--green);}
+.mesa-card.status-conta .mesa-status-txt{color:var(--purple);}
+.mesa-total-txt{font-size:13px;font-weight:700;color:var(--green);margin-top:5px;font-family:'DM Mono',monospace;}
+
+/* ── PAINEL ── */
+.painel{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:18px;position:sticky;top:68px;}
+.painel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.painel-title{font-size:16px;font-weight:800;}
+
+/* botões de produto */
+.prods-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+.prod-btn{background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:10px;cursor:pointer;text-align:left;transition:all .15s;font-family:'Syne',sans-serif;display:flex;flex-direction:column;gap:2px;}
+.prod-btn:hover{border-color:var(--amber);background:var(--s3);}
+.prod-btn:active{transform:scale(.97);}
+.prod-btn.espetinho{border-left:3px solid var(--fire);}
+.prod-btn.bebida{border-left:3px solid var(--blue);}
+.prod-btn.outro{border-left:3px solid var(--t3);}
+.pb-nome{font-size:13px;font-weight:700;color:var(--text);}
+.pb-info{font-size:11px;color:var(--t2);font-family:'DM Mono',monospace;}
+
+/* itens do pedido */
+.items-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;min-height:40px;}
+.item-row{display:flex;align-items:center;gap:7px;background:var(--s2);border-radius:8px;padding:8px 10px;}
+.item-nome{flex:1;font-size:13px;font-weight:600;}
+.item-entregue{font-size:11px;color:var(--green);margin-left:2px;}
+.iqbtn{width:22px;height:22px;border-radius:5px;border:1px solid var(--border2);background:var(--s3);color:var(--text);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;transition:all .12s;flex-shrink:0;}
+.iqbtn:hover{background:var(--amber);color:#1a1000;border-color:var(--amber);}
+.iqnum{font-size:13px;font-weight:800;min-width:20px;text-align:center;color:var(--amber);font-family:'DM Mono',monospace;}
+.item-preco{font-size:12px;font-weight:600;color:var(--green);font-family:'DM Mono',monospace;min-width:52px;text-align:right;}
+
+/* tela de conta */
+.conta-box{background:var(--s2);border-radius:12px;padding:16px;margin-bottom:14px;text-align:center;}
+.conta-total{font-size:52px;font-weight:800;color:var(--amber);font-family:'DM Mono',monospace;line-height:1;}
+.conta-label{font-size:12px;color:var(--t2);margin-top:4px;text-transform:uppercase;letter-spacing:1px;font-weight:700;}
+.divisao-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.divisao-chip{background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:10px;text-align:center;}
+.divisao-n{font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.divisao-val{font-size:18px;font-weight:800;color:var(--text);font-family:'DM Mono',monospace;}
+.pgto-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.pgto-btn{padding:12px;border-radius:9px;border:1px solid var(--border2);background:var(--s2);cursor:pointer;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--t2);transition:all .15s;text-align:center;}
+.pgto-btn:hover{border-color:var(--amber);color:var(--text);background:var(--s3);}
+.pgto-btn.sel{border-color:var(--amber);color:var(--amber);background:rgba(255,184,48,0.08);}
+
+/* pedido footer */
+.painel-footer{border-top:1px solid var(--border);padding-top:12px;display:flex;flex-direction:column;gap:8px;}
+.total-row{display:flex;justify-content:space-between;align-items:baseline;}
+.total-label{font-size:13px;color:var(--t2);}
+.total-val{font-size:24px;font-weight:800;color:var(--amber);font-family:'DM Mono',monospace;}
+
+/* ── CARDÁPIO ── */
+.cardapio-layout{display:grid;grid-template-columns:360px 1fr;gap:24px;}
+@media(max-width:760px){.cardapio-layout{grid-template-columns:1fr;}}
+.form-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:20px;position:sticky;top:68px;}
+.form-row{margin-bottom:12px;}
+.form-label{font-size:11px;font-weight:700;color:var(--t2);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:block;}
+.cat-btns{display:flex;gap:7px;}
+.cat-btn{flex:1;padding:8px 4px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--t2);cursor:pointer;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;transition:all .15s;text-align:center;}
+.cat-btn:hover{border-color:var(--border2);color:var(--text);}
+.cat-btn.sel-espetinho{background:rgba(255,107,26,0.15);border-color:var(--fire);color:var(--fire);}
+.cat-btn.sel-bebida{background:rgba(91,156,246,0.15);border-color:var(--blue);color:var(--blue);}
+.cat-btn.sel-outro{background:rgba(160,144,112,0.15);border-color:var(--t2);color:var(--text);}
+.chk-row{display:flex;align-items:center;gap:10px;background:var(--s2);border-radius:8px;padding:10px 12px;}
+
+.prod-list-item{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:11px 14px;margin-bottom:8px;}
+.plcat{width:5px;height:32px;border-radius:3px;flex-shrink:0;}
+.plcat-espetinho{background:var(--fire);}
+.plcat-bebida{background:var(--blue);}
+.plcat-outro{background:var(--t3);}
+.plinfo{flex:1;}
+.plnome{font-size:14px;font-weight:700;}
+.plmeta{font-size:11px;color:var(--t2);margin-top:3px;display:flex;gap:6px;align-items:center;}
+.plpreco{font-size:15px;font-weight:800;color:var(--green);font-family:'DM Mono',monospace;margin-right:6px;}
+.tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+.tag-esp{background:rgba(255,107,26,0.15);color:var(--fire);}
+.tag-beb{background:rgba(91,156,246,0.15);color:var(--blue);}
+.tag-out{background:rgba(160,144,112,0.12);color:var(--t2);}
+.est-tag{font-size:11px;color:var(--amber);background:rgba(255,184,48,0.1);border-radius:4px;padding:1px 7px;font-family:'DM Mono',monospace;}
+
+/* ── HISTÓRICO / RELATÓRIO ── */
+.hist-table{width:100%;border-collapse:collapse;}
+.hist-table th{text-align:left;padding:9px 14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--t2);border-bottom:1px solid var(--border);font-weight:700;}
+.hist-table td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border);}
+.hist-table tr:last-child td{border-bottom:none;}
+.hist-table tr:hover td{background:var(--s2);}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;}
+.stat-label{font-size:10px;color:var(--t2);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:6px;}
+.stat-val{font-size:26px;font-weight:800;color:var(--amber);font-family:'DM Mono',monospace;line-height:1;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:22px;width:400px;max-width:94vw;}
+.modal h3{font-size:17px;font-weight:800;margin-bottom:14px;}
+.modal-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;}
+
+@keyframes flicker{0%,100%{opacity:1}50%{opacity:.8}}
+.fi{display:inline-block;animation:flicker 1.3s ease-in-out infinite;}
+#toast{position:fixed;bottom:22px;right:22px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:11px 17px;font-size:13px;color:var(--text);z-index:999;opacity:0;transform:translateY(6px);transition:all .2s;pointer-events:none;max-width:280px;}
+#toast.show{opacity:1;transform:translateY(0);}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="fi">🔥</span> Barraca<span>.</span></div>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('mesas',this)">Mesas</button>
+    <button class="nav-btn" onclick="showPage('cardapio',this)">Cardápio</button>
+    <button class="nav-btn" onclick="showPage('historico',this)">Histórico</button>
+    <button class="nav-btn" onclick="showPage('relatorio',this)">Relatório</button>
+  </nav>
+  <div class="clock" id="clock">--:--</div>
+</header>
+
+<!-- ══════════════ MESAS ══════════════ -->
+<div class="page active" id="page-mesas">
+
+  <!-- PAINEL DA GRELHA -->
+  <div class="grelha-bar">
+    <div class="grelha-bar-top">
+      <span class="grelha-title">🔥 Grelha</span>
+      <button class="btn btn-primary btn-sm" onclick="abrirModalGrelha()">+ Colocar para assar</button>
+      <span id="alerta-grelha" class="alerta-grelha" style="display:none"></span>
+    </div>
+    <div class="grelha-grid" id="grelha-grid"></div>
+  </div>
+
+  <div class="main-layout">
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="stitle">Mesas</div>
+        <button class="btn btn-sm" onclick="abrirModalMesa()">+ Mesa</button>
+      </div>
+      <div class="mesas-grid" id="mesas-grid"></div>
+    </div>
+
+    <!-- PAINEL LATERAL -->
+    <div class="painel" id="painel">
+      <div class="painel-header">
+        <div class="painel-title" id="painel-title">Selecione uma mesa</div>
+        <div style="display:flex;gap:6px" id="painel-actions"></div>
+      </div>
+      <div id="painel-body">
+        <div class="empty" style="padding:40px 0">Clique em uma mesa para abrir o pedido</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ CARDÁPIO ══════════════ -->
+<div class="page" id="page-cardapio">
+  <div class="cardapio-layout">
+    <div>
+      <div class="stitle" style="margin-bottom:14px">Adicionar produto</div>
+      <div class="form-card">
+        <div class="form-row">
+          <label class="form-label">Nome</label>
+          <input class="input" id="prod-nome" placeholder="Ex: Espetinho de frango" />
+        </div>
+        <div class="form-row">
+          <label class="form-label">Preço (R$)</label>
+          <input class="input" id="prod-preco" type="number" placeholder="5.00" min="0" step="0.5" />
+        </div>
+        <div class="form-row">
+          <label class="form-label">Categoria</label>
+          <div class="cat-btns">
+            <button class="cat-btn sel-espetinho" id="cat-espetinho" onclick="selCat('espetinho')">🔥 Espetinho</button>
+            <button class="cat-btn" id="cat-bebida" onclick="selCat('bebida')">🥤 Bebida</button>
+            <button class="cat-btn" id="cat-outro" onclick="selCat('outro')">· Outro</button>
+          </div>
+        </div>
+        <div class="form-row chk-row" id="row-est">
+          <input type="checkbox" id="chk-est" style="width:16px;height:16px;accent-color:var(--amber);cursor:pointer;flex-shrink:0" checked />
+          <label for="chk-est" style="font-size:13px;cursor:pointer;color:var(--t2)">Controlar estoque na grelha</label>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="adicionarProduto()">Adicionar ao cardápio</button>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="stitle">Cardápio atual</div>
+        <span id="cardapio-count" style="font-size:12px;color:var(--t2)"></span>
+      </div>
+      <div id="prod-lista"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ HISTÓRICO ══════════════ -->
+<div class="page" id="page-historico">
+  <div class="stitle" style="margin-bottom:14px">Histórico de pedidos</div>
+  <div id="hist-lista"></div>
+</div>
+
+<!-- ══════════════ RELATÓRIO ══════════════ -->
+<div class="page" id="page-relatorio">
+  <div class="stitle" style="margin-bottom:14px">Resumo do dia</div>
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="stitle" style="margin-bottom:10px">Mais vendidos hoje</div>
+  <div id="mais-vendidos" style="margin-bottom:22px"></div>
+  <div class="stitle" style="margin-bottom:10px">Fechamentos de hoje</div>
+  <div id="relatorio-lista"></div>
+</div>
+
+<!-- ══ MODAL GRELHA ══ -->
+<div class="modal-overlay" id="modal-grelha">
+  <div class="modal">
+    <h3>🔥 Colocar para assar</h3>
+    <p style="font-size:13px;color:var(--t2);margin-bottom:14px">Quantos de cada tipo estão indo para o fogo agora?</p>
+    <div id="modal-grelha-opts"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="fecharModal('modal-grelha')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarGrelha()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL NOVA MESA ══ -->
+<div class="modal-overlay" id="modal-mesa">
+  <div class="modal">
+    <h3>Nova mesa</h3>
+    <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Número da mesa</p>
+    <input class="input" id="inp-mesa" type="number" placeholder="Ex: 5" min="1" />
+    <div class="modal-actions">
+      <button class="btn" onclick="fecharModal('modal-mesa')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarMesa()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL EDITAR PRODUTO ══ -->
+<div class="modal-overlay" id="modal-editar">
+  <div class="modal">
+    <h3>Editar produto</h3>
+    <div class="form-row" style="margin-bottom:11px">
+      <label class="form-label">Nome</label>
+      <input class="input" id="edit-nome" />
+    </div>
+    <div class="form-row" style="margin-bottom:11px">
+      <label class="form-label">Preço (R$)</label>
+      <input class="input" id="edit-preco" type="number" min="0" step="0.5" />
+    </div>
+    <div class="form-row" style="margin-bottom:11px">
+      <label class="form-label">Categoria</label>
+      <div class="cat-btns">
+        <button class="cat-btn" id="ecat-espetinho" onclick="selEditCat('espetinho')">🔥 Espetinho</button>
+        <button class="cat-btn" id="ecat-bebida" onclick="selEditCat('bebida')">🥤 Bebida</button>
+        <button class="cat-btn" id="ecat-outro" onclick="selEditCat('outro')">· Outro</button>
+      </div>
+    </div>
+    <div class="chk-row" style="background:var(--s2);border-radius:8px;padding:10px 12px">
+      <input type="checkbox" id="edit-chk-est" style="width:16px;height:16px;accent-color:var(--amber);cursor:pointer;flex-shrink:0" />
+      <label for="edit-chk-est" style="font-size:13px;cursor:pointer;color:var(--t2)">Controlar estoque na grelha</label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="fecharModal('modal-editar')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEdicao()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+//  ESTADO
+// ═══════════════════════════════════════
+const KEY = 'barraca_v4';
+
+function defaultState() {
+  return {
+    grelha: {},          // { prodId: qtdAssando }
+    mesas: [
+      {num:1,status:'livre',pedido:[]},
+      {num:2,status:'livre',pedido:[]},
+      {num:3,status:'livre',pedido:[]},
+      {num:4,status:'livre',pedido:[]},
+    ],
+    historico: [],
+    mesaSel: null,
+    produtos: [
+      {id:'p1',nome:'Espetinho de carne',preco:5.00,cat:'espetinho',est:true},
+      {id:'p2',nome:'Espetinho de frango',preco:5.00,cat:'espetinho',est:true},
+      {id:'p3',nome:'Refrigerante',preco:5.00,cat:'bebida',est:false},
+    ],
+  };
+}
+
+// Carrega estado — se chave existir usa, senão cria padrão
+let S = (() => {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    // garantir campos novos que podem não existir em saves antigos
+    if (!parsed.grelha) parsed.grelha = {};
+    if (!parsed.produtos) parsed.produtos = defaultState().produtos;
+    if (!parsed.mesas) parsed.mesas = defaultState().mesas;
+    if (!parsed.historico) parsed.historico = [];
+    return parsed;
+  } catch(e) { return defaultState(); }
+})();
+
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
+}
+
+// status das mesas: 'livre' | 'pedido' | 'entregue' | 'conta'
+
+// ═══════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════
+function fmt(n) { return Number(n).toFixed(2).replace('.',','); }
+function calcTotal(pedido) { return pedido.reduce((s,i)=>s+i.preco*i.qtd,0); }
+function getMesa(num) { return S.mesas.find(m=>m.num===num); }
+function getMesaSel() { return getMesa(S.mesaSel); }
+function getProd(id) { return S.produtos.find(p=>p.id===id); }
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 2800);
+}
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(o =>
+  o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); })
+);
+
+// ═══════════════════════════════════════
+//  RELÓGIO
+// ═══════════════════════════════════════
+setInterval(()=>{
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+},1000);
+
+// ═══════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='cardapio') renderCardapio();
+  if(id==='historico') renderHistorico();
+  if(id==='relatorio') renderRelatorio();
+}
+
+// ═══════════════════════════════════════
+//  GRELHA
+// ═══════════════════════════════════════
+// quantos espetinhos de cada tipo estão PEDIDOS nas mesas (não entregues)
+function pedidosPendentes() {
+  const map = {};
+  S.mesas.forEach(mesa => {
+    if (mesa.status === 'livre') return;
+    mesa.pedido.forEach(item => {
+      const prod = getProd(item.prodId);
+      if (!prod || !prod.est) return;
+      // conta itens não entregues
+      const pendente = item.qtd - (item.qtdEntregue||0);
+      if (pendente > 0) map[item.prodId] = (map[item.prodId]||0) + pendente;
+    });
+  });
+  return map;
+}
+
+function renderGrelha() {
+  const prods = S.produtos.filter(p=>p.est);
+  const pendentes = pedidosPendentes();
+  const grid = document.getElementById('grelha-grid');
+  const alerta = document.getElementById('alerta-grelha');
+
+  if (!prods.length) {
+    grid.innerHTML = '<span style="font-size:13px;color:var(--t3)">Configure produtos com estoque no Cardápio</span>';
+    alerta.style.display = 'none'; return;
+  }
+
+  // verificar se algum produto tem mais pedidos que grelha
+  let temAlerta = false;
+  prods.forEach(p => {
+    const assando = S.grelha[p.id]||0;
+    const pedido = pendentes[p.id]||0;
+    if (pedido > assando) temAlerta = true;
+  });
+
+  if (temAlerta) {
+    alerta.style.display='inline';
+    alerta.textContent = '⚠️ Pedidos superam a grelha!';
+  } else {
+    alerta.style.display='none';
+  }
+
+  grid.innerHTML = prods.map(p => {
+    const assando = S.grelha[p.id]||0;
+    const pedido  = pendentes[p.id]||0;
+    const cor = pedido > assando ? 'var(--red)' : assando > 0 ? 'var(--fire)' : 'var(--t3)';
+    return `<div class="grelha-card">
+      <div>
+        <div class="grelha-num" style="color:${cor}">${assando}</div>
+        <div class="grelha-label">assando</div>
+      </div>
+      <div class="grelha-sep"></div>
+      <div class="grelha-col" style="flex:1">
+        <div style="font-size:13px;font-weight:700;margin-bottom:6px">${p.nome}</div>
+        <div class="grelha-row">
+          <span class="grelha-row-label" style="color:var(--t2)">Pedidos:</span>
+          <span class="grelha-row-num" style="color:${pedido>assando?'var(--red)':'var(--amber)'}">${pedido}</span>
+          <div class="grelha-row-ctrl">
+            <button class="qbtn" onclick="ajustarGrelha('${p.id}',-1)">−</button>
+            <button class="qbtn" onclick="ajustarGrelha('${p.id}',1)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function ajustarGrelha(prodId, delta) {
+  S.grelha[prodId] = Math.max(0, (S.grelha[prodId]||0) + delta);
+  save(); renderGrelha();
+}
+
+function abrirModalGrelha() {
+  const prods = S.produtos.filter(p=>p.est);
+  if (!prods.length) { toast('Cadastre espetinhos com estoque no Cardápio'); return; }
+  const opts = document.getElementById('modal-grelha-opts');
+  // usa IDs únicos baseados no prodId para evitar conflito de seletor
+  opts.innerHTML = prods.map(p => `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;background:var(--s2);border-radius:9px;padding:10px 14px">
+      <span style="flex:1;font-size:14px;font-weight:700">${p.nome}</span>
+      <button class="qbtn" style="width:28px;height:28px" onclick="mgAdj('${p.id}',-1)">−</button>
+      <span id="mg-${p.id}" style="min-width:28px;text-align:center;font-size:18px;font-weight:800;color:var(--amber);font-family:'DM Mono',monospace">0</span>
+      <button class="qbtn" style="width:28px;height:28px" onclick="mgAdj('${p.id}',1)">+</button>
+    </div>`).join('');
+  document.getElementById('modal-grelha').classList.add('open');
+}
+
+function mgAdj(prodId, delta) {
+  const el = document.getElementById('mg-'+prodId);
+  if (!el) return;
+  el.textContent = Math.max(0, parseInt(el.textContent||'0') + delta);
+}
+
+function confirmarGrelha() {
+  let total = 0;
+  S.produtos.filter(p=>p.est).forEach(p => {
+    const el = document.getElementById('mg-'+p.id);
+    if (!el) return;
+    const n = parseInt(el.textContent)||0;
+    S.grelha[p.id] = (S.grelha[p.id]||0) + n;
+    total += n;
+  });
+  save(); renderGrelha(); fecharModal('modal-grelha');
+  if (total>0) toast(`🔥 +${total} espetinhos na grelha!`);
+}
+
+// ═══════════════════════════════════════
+//  MESAS
+// ═══════════════════════════════════════
+function renderMesas() {
+  const grid = document.getElementById('mesas-grid');
+  grid.innerHTML = '';
+  S.mesas.forEach(mesa => {
+    const div = document.createElement('div');
+    const sel = S.mesaSel === mesa.num;
+    const statusLabel = {livre:'Livre',pedido:'Pedido aberto',entregue:'Entregue',conta:'Aguardando pagto.'}[mesa.status]||mesa.status;
+    div.className = `mesa-card status-${mesa.status}${sel?' selecionada':''}`;
+    const total = calcTotal(mesa.pedido);
+    const nItens = mesa.pedido.reduce((s,i)=>s+i.qtd,0);
+    div.innerHTML = `<div class="mesa-num">${mesa.num}</div>
+      <div class="mesa-status-txt">${statusLabel}</div>
+      ${mesa.status!=='livre'?`<div class="mesa-total-txt">R$ ${fmt(total)}</div>`:''}`;
+    div.onclick = ()=>selecionarMesa(mesa.num);
+    grid.appendChild(div);
+  });
+}
+
+function selecionarMesa(num) {
+  S.mesaSel = num; save(); renderMesas(); renderPainel();
+}
+
+// ═══════════════════════════════════════
+//  PAINEL — renderiza conforme status
+// ═══════════════════════════════════════
+function renderPainel() {
+  const mesa = getMesaSel();
+  const title = document.getElementById('painel-title');
+  const actions = document.getElementById('painel-actions');
+  const body = document.getElementById('painel-body');
+
+  if (!mesa) {
+    title.textContent = 'Selecione uma mesa';
+    actions.innerHTML = '';
+    body.innerHTML = '<div class="empty" style="padding:40px 0">Clique em uma mesa para abrir o pedido</div>';
+    return;
+  }
+
+  title.textContent = `Mesa ${mesa.num}`;
+
+  if (mesa.status === 'livre') {
+    mesa.status = 'pedido'; save();
+  }
+
+  if (mesa.status === 'pedido') renderPainelPedido(mesa, title, actions, body);
+  else if (mesa.status === 'entregue') renderPainelEntregue(mesa, title, actions, body);
+  else if (mesa.status === 'conta') renderPainelConta(mesa, title, actions, body);
+}
+
+// ── Status: pedido (adicionando itens) ──
+function renderPainelPedido(mesa, title, actions, body) {
+  actions.innerHTML = `<button class="btn btn-sm btn-danger" onclick="cancelarMesa()">Cancelar mesa</button>`;
+
+  // botões de produto
+  const prods = S.produtos;
+  const prodsHtml = !prods.length
+    ? '<div class="empty" style="grid-column:span 2">Cadastre produtos no Cardápio</div>'
+    : prods.map(p => {
+        const assando = p.est ? (S.grelha[p.id]||0) : null;
+        const semEst = p.est && assando === 0;
+        return `<button class="prod-btn ${p.cat}" onclick="addAoPedido('${p.id}')">
+          <span class="pb-nome">${p.nome}</span>
+          <span class="pb-info">R$ ${fmt(p.preco)}${p.est?` · ${assando} na grelha`:''}</span>
+        </button>`;
+      }).join('');
+
+  // lista de itens
+  const itensHtml = !mesa.pedido.length
+    ? '<div class="empty">Nenhum item — clique nos produtos acima</div>'
+    : mesa.pedido.map((item,i)=>`
+        <div class="item-row">
+          <span class="item-nome">${item.nome}</span>
+          <button class="iqbtn" onclick="ajustarItemPedido(${i},-1)">−</button>
+          <span class="iqnum">${item.qtd}</span>
+          <button class="iqbtn" onclick="ajustarItemPedido(${i},1)">+</button>
+          <span class="item-preco">R$ ${fmt(item.preco*item.qtd)}</span>
+        </div>`).join('');
+
+  const total = calcTotal(mesa.pedido);
+
+  body.innerHTML = `
+    <div class="stitle">Adicionar ao pedido</div>
+    <div class="prods-grid">${prodsHtml}</div>
+    <div class="divider"></div>
+    <div class="stitle">Itens do pedido</div>
+    <div class="items-list">${itensHtml}</div>
+    ${mesa.pedido.length ? `
+    <div class="painel-footer">
+      <div class="total-row"><span class="total-label">Total</span><span class="total-val">R$ ${fmt(total)}</span></div>
+      <button class="btn btn-green btn-full" onclick="marcarEntregue()">✓ Marcar como entregue</button>
+    </div>` : ''}
+  `;
+}
+
+// ── Status: entregue (aguardando fechar conta) ──
+function renderPainelEntregue(mesa, title, actions, body) {
+  actions.innerHTML = `<button class="btn btn-sm" onclick="voltarParaPedido()">← Voltar ao pedido</button>`;
+
+  const itensHtml = mesa.pedido.map((item,i)=>`
+    <div class="item-row">
+      <span class="item-nome">${item.nome}</span>
+      <span class="iqnum" style="min-width:24px">${item.qtd}</span>
+      <span class="item-entregue">✓</span>
+      <span class="item-preco" style="margin-left:auto">R$ ${fmt(item.preco*item.qtd)}</span>
+    </div>`).join('');
+
+  const total = calcTotal(mesa.pedido);
+
+  body.innerHTML = `
+    <div class="stitle">Pedido entregue</div>
+    <div class="items-list">${itensHtml}</div>
+    <div class="painel-footer">
+      <div class="total-row"><span class="total-label">Total</span><span class="total-val">R$ ${fmt(total)}</span></div>
+      <button class="btn btn-primary btn-full" onclick="abrirConta()">Fechar conta →</button>
+    </div>
+  `;
+}
+
+// ── Status: conta (mostra total, divisão, pagamento) ──
+let pgtoSel = null;
+function renderPainelConta(mesa, title, actions, body) {
+  actions.innerHTML = `<button class="btn btn-sm" onclick="voltarParaEntregue()">← Voltar</button>`;
+  const total = calcTotal(mesa.pedido);
+
+  body.innerHTML = `
+    <div class="conta-box">
+      <div class="conta-label">Total a pagar</div>
+      <div class="conta-total">R$ ${fmt(total)}</div>
+    </div>
+
+    <div class="stitle">Dividir por</div>
+    <div class="divisao-grid">
+      <div class="divisao-chip"><div class="divisao-n">2 pessoas</div><div class="divisao-val">R$ ${fmt(total/2)}</div></div>
+      <div class="divisao-chip"><div class="divisao-n">3 pessoas</div><div class="divisao-val">R$ ${fmt(total/3)}</div></div>
+      <div class="divisao-chip"><div class="divisao-n">4 pessoas</div><div class="divisao-val">R$ ${fmt(total/4)}</div></div>
+      <div class="divisao-chip"><div class="divisao-n">5 pessoas</div><div class="divisao-val">R$ ${fmt(total/5)}</div></div>
+    </div>
+
+    <div class="stitle">Forma de pagamento</div>
+    <div class="pgto-btns">
+      <button class="pgto-btn${pgtoSel==='dinheiro'?' sel':''}" id="pgto-dinheiro" onclick="selPgto('dinheiro')">💵 Dinheiro</button>
+      <button class="pgto-btn${pgtoSel==='cartao'?' sel':''}" id="pgto-cartao" onclick="selPgto('cartao')">💳 Cartão</button>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="confirmarPagamento()">✓ Confirmar recebimento</button>
+  `;
+}
+
+function selPgto(tipo) {
+  pgtoSel = tipo;
+  document.querySelectorAll('.pgto-btn').forEach(b=>b.classList.remove('sel'));
+  const el = document.getElementById('pgto-'+tipo);
+  if (el) el.classList.add('sel');
+}
+
+// ═══════════════════════════════════════
+//  AÇÕES DO PEDIDO
+// ═══════════════════════════════════════
+function addAoPedido(prodId) {
+  const mesa = getMesaSel(); if (!mesa) return;
+  const prod = getProd(prodId); if (!prod) return;
+
+  // espetinhos: desconta da grelha
+  if (prod.est) {
+    const disp = S.grelha[prodId]||0;
+    if (disp <= 0) {
+      // permite mesmo sem estoque, mas avisa
+      toast(`⚠️ ${prod.nome} não está na grelha — adicionado mesmo assim`);
+    } else {
+      S.grelha[prodId] = disp - 1;
+    }
+  }
+
+  const ex = mesa.pedido.find(i=>i.prodId===prodId);
+  if (ex) ex.qtd += 1;
+  else mesa.pedido.push({prodId, nome:prod.nome, qtd:1, qtdEntregue:0, preco:prod.preco});
+
+  save(); renderGrelha(); renderPainel(); renderMesas();
+}
+
+function ajustarItemPedido(idx, delta) {
+  const mesa = getMesaSel(); if (!mesa) return;
+  const item = mesa.pedido[idx]; if (!item) return;
+  const prod = getProd(item.prodId);
+
+  if (delta < 0) {
+    if (prod && prod.est) S.grelha[item.prodId] = (S.grelha[item.prodId]||0)+1;
+    item.qtd -= 1;
+    if (item.qtd <= 0) mesa.pedido.splice(idx,1);
+  } else {
+    if (prod && prod.est) {
+      const disp = S.grelha[item.prodId]||0;
+      if (disp <= 0) toast(`⚠️ ${prod.nome} não está na grelha — adicionado mesmo assim`);
+      else S.grelha[item.prodId] = disp-1;
+    }
+    item.qtd += 1;
+  }
+  save(); renderGrelha(); renderPainel(); renderMesas();
+}
+
+function marcarEntregue() {
+  const mesa = getMesaSel(); if (!mesa||!mesa.pedido.length) return toast('Pedido vazio');
+  // marca todos como entregues
+  mesa.pedido.forEach(i=>i.qtdEntregue=i.qtd);
+  mesa.status = 'entregue';
+  save(); renderMesas(); renderPainel(); toast('✓ Pedido marcado como entregue');
+}
+
+function abrirConta() {
+  const mesa = getMesaSel(); if (!mesa) return;
+  pgtoSel = null;
+  mesa.status = 'conta';
+  save(); renderMesas(); renderPainel();
+}
+
+function voltarParaPedido() {
+  const mesa = getMesaSel(); if (!mesa) return;
+  mesa.status = 'pedido';
+  save(); renderMesas(); renderPainel();
+}
+
+function voltarParaEntregue() {
+  const mesa = getMesaSel(); if (!mesa) return;
+  mesa.status = 'entregue';
+  save(); renderMesas(); renderPainel();
+}
+
+function confirmarPagamento() {
+  const mesa = getMesaSel(); if (!mesa) return;
+  if (!pgtoSel) return toast('Selecione a forma de pagamento');
+  const total = calcTotal(mesa.pedido);
+  S.historico.unshift({
+    mesa: mesa.num, itens: JSON.parse(JSON.stringify(mesa.pedido)), total,
+    pgto: pgtoSel,
+    hora: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+    data: new Date().toLocaleDateString('pt-BR'),
+    ts: Date.now(),
+  });
+  mesa.pedido = []; mesa.status = 'livre';
+  S.mesaSel = null;
+  save(); renderMesas(); renderPainel(); renderGrelha();
+  toast(`✓ R$ ${fmt(total)} recebido (${pgtoSel === 'dinheiro' ? 'dinheiro' : 'cartão'}) — Mesa livre!`);
+}
+
+function cancelarMesa() {
+  const mesa = getMesaSel(); if (!mesa) return;
+  if (mesa.pedido.length && !confirm('Tem itens no pedido. Cancelar mesmo assim?')) return;
+  // devolver à grelha
+  mesa.pedido.forEach(item=>{
+    const prod = getProd(item.prodId);
+    if (prod&&prod.est) S.grelha[item.prodId]=(S.grelha[item.prodId]||0)+item.qtd;
+  });
+  mesa.pedido=[]; mesa.status='livre'; S.mesaSel=null;
+  save(); renderGrelha(); renderMesas(); renderPainel(); toast('Mesa cancelada');
+}
+
+function abrirModalMesa() {
+  document.getElementById('inp-mesa').value='';
+  document.getElementById('modal-mesa').classList.add('open');
+  setTimeout(()=>document.getElementById('inp-mesa').focus(),80);
+}
+
+function confirmarMesa() {
+  const num = parseInt(document.getElementById('inp-mesa').value);
+  if (!num||num<1) return toast('Número inválido');
+  if (S.mesas.find(m=>m.num===num)) return toast('Mesa já existe');
+  S.mesas.push({num,status:'livre',pedido:[]});
+  S.mesas.sort((a,b)=>a.num-b.num);
+  save(); fecharModal('modal-mesa'); renderMesas(); toast(`Mesa ${num} criada`);
+}
+
+// ═══════════════════════════════════════
+//  CARDÁPIO
+// ═══════════════════════════════════════
+let catSel = 'espetinho';
+let editCatSel = 'espetinho';
+let editId = null;
+
+function selCat(cat) {
+  catSel = cat;
+  ['espetinho','bebida','outro'].forEach(c=>{
+    document.getElementById('cat-'+c).className='cat-btn'+(c===cat?' sel-'+c:'');
+  });
+  document.getElementById('row-est').style.display = cat==='espetinho'?'flex':'none';
+  document.getElementById('chk-est').checked = cat==='espetinho';
+}
+
+function adicionarProduto() {
+  const nome = document.getElementById('prod-nome').value.trim();
+  const preco = parseFloat(document.getElementById('prod-preco').value)||0;
+  const est = document.getElementById('chk-est').checked;
+  if (!nome) return toast('Digite o nome do produto');
+  S.produtos.push({id:'p'+Date.now(), nome, preco, cat:catSel, est});
+  document.getElementById('prod-nome').value='';
+  document.getElementById('prod-preco').value='';
+  save(); renderCardapio(); renderGrelha(); toast(`${nome} adicionado`);
+}
+
+function renderCardapio() {
+  document.getElementById('cardapio-count').textContent = S.produtos.length+' produto'+(S.produtos.length!==1?'s':'');
+  const lista = document.getElementById('prod-lista');
+  if (!S.produtos.length) {
+    lista.innerHTML='<div class="empty" style="padding:30px 0;text-align:center">Nenhum produto cadastrado</div>'; return;
+  }
+  lista.innerHTML = S.produtos.map(p=>`
+    <div class="prod-list-item">
+      <div class="plcat plcat-${p.cat}"></div>
+      <div class="plinfo">
+        <div class="plnome">${p.nome}</div>
+        <div class="plmeta">
+          <span class="tag ${p.cat==='espetinho'?'tag-esp':p.cat==='bebida'?'tag-beb':'tag-out'}">${p.cat}</span>
+          ${p.est?`<span class="est-tag">${S.grelha[p.id]||0} na grelha</span>`:''}
+        </div>
+      </div>
+      <span class="plpreco">R$ ${fmt(p.preco)}</span>
+      <button class="btn btn-sm" onclick="abrirEditar('${p.id}')">Editar</button>
+      <button class="btn btn-sm btn-danger" onclick="removerProduto('${p.id}')">×</button>
+    </div>`).join('');
+}
+
+function removerProduto(id) {
+  if (!confirm('Remover este produto?')) return;
+  S.produtos = S.produtos.filter(p=>p.id!==id);
+  delete S.grelha[id];
+  save(); renderCardapio(); renderGrelha(); toast('Produto removido');
+}
+
+function abrirEditar(id) {
+  const p = getProd(id); if (!p) return;
+  editId = id;
+  document.getElementById('edit-nome').value = p.nome;
+  document.getElementById('edit-preco').value = p.preco;
+  document.getElementById('edit-chk-est').checked = !!p.est;
+  selEditCat(p.cat);
+  document.getElementById('modal-editar').classList.add('open');
+}
+
+function selEditCat(cat) {
+  editCatSel = cat;
+  ['espetinho','bebida','outro'].forEach(c=>{
+    document.getElementById('ecat-'+c).className='cat-btn'+(c===cat?' sel-'+c:'');
+  });
+}
+
+function salvarEdicao() {
+  const p = getProd(editId); if (!p) return;
+  p.nome = document.getElementById('edit-nome').value.trim()||p.nome;
+  p.preco = parseFloat(document.getElementById('edit-preco').value)||p.preco;
+  p.cat = editCatSel;
+  p.est = document.getElementById('edit-chk-est').checked;
+  // atualizar nos pedidos abertos
+  S.mesas.forEach(m=>m.pedido.forEach(i=>{ if(i.prodId===editId){i.nome=p.nome;i.preco=p.preco;} }));
+  save(); fecharModal('modal-editar'); renderCardapio(); renderGrelha(); renderPainel(); toast('Produto atualizado');
+}
+
+// ═══════════════════════════════════════
+//  HISTÓRICO
+// ═══════════════════════════════════════
+function renderHistorico() {
+  const el = document.getElementById('hist-lista');
+  if (!S.historico.length) {
+    el.innerHTML='<div style="padding:40px 0;text-align:center;color:var(--t3);font-size:14px">Nenhum pedido registrado ainda</div>'; return;
+  }
+  el.innerHTML=`<table class="hist-table">
+    <thead><tr><th>Mesa</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Hora</th><th>Data</th></tr></thead>
+    <tbody>${S.historico.map(r=>`<tr>
+      <td><strong>Mesa ${r.mesa}</strong></td>
+      <td style="color:var(--t2);max-width:200px">${r.itens.map(i=>i.qtd+'× '+i.nome).join(', ')}</td>
+      <td style="color:var(--green);font-family:'DM Mono',monospace;font-weight:700">R$ ${fmt(r.total)}</td>
+      <td>${r.pgto==='dinheiro'?'💵 Dinheiro':'💳 Cartão'}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--t2)">${r.hora}</td>
+      <td style="color:var(--t2)">${r.data}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+// ═══════════════════════════════════════
+//  RELATÓRIO
+// ═══════════════════════════════════════
+function renderRelatorio() {
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const dohoje = S.historico.filter(r=>r.data===hoje);
+  const total = dohoje.reduce((s,r)=>s+r.total,0);
+  const dinheiro = dohoje.filter(r=>r.pgto==='dinheiro').reduce((s,r)=>s+r.total,0);
+  const cartao = dohoje.filter(r=>r.pgto==='cartao').reduce((s,r)=>s+r.total,0);
+
+  const contagem={};
+  dohoje.forEach(r=>r.itens.forEach(i=>{ contagem[i.nome]=(contagem[i.nome]||0)+i.qtd; }));
+  const ranking = Object.entries(contagem).sort((a,b)=>b[1]-a[1]);
+
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Faturamento hoje</div><div class="stat-val" style="font-size:22px">R$ ${fmt(total)}</div></div>
+    <div class="stat-card"><div class="stat-label">Pedidos fechados</div><div class="stat-val">${dohoje.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Ticket médio</div><div class="stat-val" style="font-size:22px">R$ ${dohoje.length?fmt(total/dohoje.length):'0,00'}</div></div>
+    <div class="stat-card"><div class="stat-label">💵 Dinheiro</div><div class="stat-val" style="font-size:22px">R$ ${fmt(dinheiro)}</div></div>
+    <div class="stat-card"><div class="stat-label">💳 Cartão</div><div class="stat-val" style="font-size:22px">R$ ${fmt(cartao)}</div></div>
+    <div class="stat-card"><div class="stat-label">Total histórico</div><div class="stat-val" style="font-size:22px">R$ ${fmt(S.historico.reduce((s,r)=>s+r.total,0))}</div></div>`;
+
+  const mv = document.getElementById('mais-vendidos');
+  if (!ranking.length) { mv.innerHTML='<div style="color:var(--t3);font-size:13px;padding:8px 0">Nenhuma venda hoje.</div>'; }
+  else {
+    const max=ranking[0][1];
+    mv.innerHTML=ranking.map(([nome,qtd])=>`
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:700;min-width:190px;color:var(--text)">${nome}</span>
+        <div style="flex:1;background:var(--s2);border-radius:4px;height:7px;overflow:hidden">
+          <div style="height:100%;background:var(--amber);border-radius:4px;width:${Math.round(qtd/max*100)}%"></div>
+        </div>
+        <span style="font-size:13px;font-family:'DM Mono',monospace;color:var(--amber);min-width:24px;text-align:right">${qtd}</span>
+      </div>`).join('');
+  }
+
+  const el = document.getElementById('relatorio-lista');
+  if (!dohoje.length) { el.innerHTML='<div style="color:var(--t3);font-size:13px;padding:8px 0">Nenhum pedido hoje.</div>'; return; }
+  el.innerHTML=`<table class="hist-table">
+    <thead><tr><th>Mesa</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Hora</th></tr></thead>
+    <tbody>${dohoje.map(r=>`<tr>
+      <td><strong>Mesa ${r.mesa}</strong></td>
+      <td style="color:var(--t2)">${r.itens.map(i=>i.qtd+'× '+i.nome).join(', ')}</td>
+      <td style="color:var(--green);font-family:'DM Mono',monospace;font-weight:700">R$ ${fmt(r.total)}</td>
+      <td>${r.pgto==='dinheiro'?'💵':'💳'} ${r.pgto==='dinheiro'?'Dinheiro':'Cartão'}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--t2)">${r.hora}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+document.getElementById('inp-mesa').addEventListener('keydown',e=>{ if(e.key==='Enter') confirmarMesa(); });
+document.getElementById('prod-nome').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('prod-preco').focus(); });
+
+selCat('espetinho');
+renderGrelha();
+renderMesas();
+renderPainel();
+</script>
+</body>
+</html>
